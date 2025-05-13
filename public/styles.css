@@ -311,3 +311,27 @@ th {
         padding: 15px 0;
     }
 }
+
+/* Enhanced mobile styling */
+@media (max-width: 768px) {
+    /* Make table text smaller on mobile */
+    table {
+        font-size: 14px;
+    }
+    
+    /* Reduce padding in table cells */
+    th, td {
+        padding: 8px 4px;
+    }
+    
+    /* Make delete button smaller */
+    .btn-delete {
+        padding: 4px 6px;
+        font-size: 12px;
+    }
+    
+    /* Ensure table doesn't overflow */
+    .data-display {
+        overflow-x: auto;
+    }
+}

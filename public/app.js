@@ -135,17 +135,25 @@ function displayReadings(readings) {
         const row = document.createElement('tr');
         row.dataset.id = reading.id;
         
-        // Format date
-        const date = new Date(reading.timestamp);
-        const formattedDate = date.toLocaleString();
+        // Format date with shorter format for mobile
+const date = new Date(reading.timestamp);
+const month = String(date.getMonth() + 1).padStart(2, '0');
+const day = String(date.getDate()).padStart(2, '0');
+const year = String(date.getFullYear()).slice(2); // Just the last 2 digits
+const hours = String(date.getHours()).padStart(2, '0');
+const minutes = String(date.getMinutes()).padStart(2, '0');
+const formattedDate = `${month}/${day}/${year} ${hours}:${minutes}`;
         
-        row.innerHTML = `
-            <td>${formattedDate}</td>
-            <td>${reading.room}</td>
-            <td>${reading.temperature} °F</td>
-            <td>${reading.humidity} %</td>
-            <td><button class="btn-delete" onclick="deleteReading(${reading.id})">Delete</button></td>
-        `;
+        // Truncate room name to first 4 characters
+const shortRoomName = reading.room.substring(0, 4);
+
+row.innerHTML = `
+    <td>${formattedDate}</td>
+    <td>${shortRoomName}</td>
+    <td>${reading.temperature} °F</td>
+    <td>${reading.humidity} %</td>
+    <td><button class="btn-delete" onclick="deleteReading(${reading.id})">Del</button></td>
+`;
         
         readingsTable.appendChild(row);
     });
