@@ -8,7 +8,6 @@ const emailInput = document.getElementById('email');
 const emailExportBtn = document.getElementById('email-export-btn');
 const dateInput = document.getElementById('date-input');
 const timeInput = document.getElementById('time-input');
-const nowBtn = document.getElementById('now-btn');
 const clockBtn = document.getElementById('clock-btn');
 
 // Function to set the date and time inputs to current date and time
@@ -59,11 +58,6 @@ form.addEventListener('submit', function(e) {
     };
     
     addReading(reading);
-});
-
-// "Now" button click handler
-nowBtn.addEventListener('click', function() {
-    setDatetimeToNow();
 });
 
 // Email export button click handler

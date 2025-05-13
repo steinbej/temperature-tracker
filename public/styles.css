@@ -335,3 +335,37 @@ th {
         overflow-x: auto;
     }
 }
+
+@media (max-width: 768px) {
+    /* Give more space for the date and time fields */
+    .date-time-fields {
+        width: 100%;
+    }
+    
+    /* Adjust input sizes to fit better */
+    #date-input {
+        width: 58%;
+    }
+    
+    #time-input {
+        width: 38%;
+    }
+    
+    /* Ensure the clock icon doesn't overlap with text */
+    .time-input-container {
+        position: relative;
+    }
+    
+    .time-input-container input {
+        padding-right: 25px; /* Make room for the icon */
+    }
+    
+    .icon-btn {
+        right: 4px;
+    }
+    
+    .icon-btn svg {
+        width: 14px;
+        height: 14px;
+    }
+}
