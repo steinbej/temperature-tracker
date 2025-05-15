@@ -81,9 +81,14 @@ emailExportBtn.addEventListener('click', function() {
 
 // Function to load all readings
 function loadReadings() {
+    console.log('Loading readings...');
     fetch('/api/readings')
-        .then(response => response.json())
+        .then(response => {
+            console.log('Readings response status:', response.status);
+            return response.json();
+        })
         .then(data => {
+            console.log('Readings data received:', data);
             displayReadings(data.data);
         })
         .catch(error => {
@@ -93,6 +98,7 @@ function loadReadings() {
 
 // Function to add a new reading
 function addReading(reading) {
+    console.log('Submitting reading:', reading);
     fetch('/api/readings', {
         method: 'POST',
         headers: {
@@ -100,8 +106,12 @@ function addReading(reading) {
         },
         body: JSON.stringify(reading)
     })
-    .then(response => response.json())
+    .then(response => {
+        console.log('Response status:', response.status);
+        return response.json();
+    })
     .then(data => {
+        console.log('Response data:', data);
         if (data.error) {
             alert('Error: ' + data.error);
             return;
@@ -115,6 +125,7 @@ function addReading(reading) {
         
         // Refresh readings
         loadReadings();
+        console.log('Refreshing readings after add');
     })
     .catch(error => {
         console.error('Error adding reading:', error);
@@ -155,6 +166,7 @@ row.innerHTML = `
 
 // Function to delete a reading
 function deleteReading(id) {
+    console.log('Deleting reading with ID:', id);
     if (!confirm('Are you sure you want to delete this reading?')) {
         return;
     }
@@ -162,8 +174,12 @@ function deleteReading(id) {
     fetch(`/api/readings/${id}`, {
         method: 'DELETE'
     })
-    .then(response => response.json())
+    .then(response => {
+        console.log('Delete response status:', response.status);
+        return response.json();
+    })
     .then(data => {
+        console.log('Delete response data:', data);
         if (data.error) {
             alert('Error: ' + data.error);
             return;
@@ -171,6 +187,7 @@ function deleteReading(id) {
         
         // Refresh readings
         loadReadings();
+        console.log('Refreshing readings after delete');
     })
     .catch(error => {
         console.error('Error deleting reading:', error);
