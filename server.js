@@ -1,7 +1,7 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
-const sqlite3 = require('sqlite3').verbose();
+const { db, collection, addDoc, getDocs, deleteDoc, doc, query, orderBy } = require('./firebase');
 const path = require('path');
 
 // Initialize express app
@@ -16,37 +16,30 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static('public'));
 
-// Initialize database
-const db = new sqlite3.Database('./database.db', (err) => {
-    if (err) {
-        console.error('Error opening database', err);
-    } else {
-        console.log('Connected to the SQLite database');
+// API endpoint to get all readings
+app.get('/api/readings', async (req, res) => {
+    try {
+        const readingsRef = collection(db, 'readings');
+        const q = query(readingsRef, orderBy('timestamp', 'desc'));
+        const querySnapshot = await getDocs(q);
         
-        // Create table if it doesn't exist
-        db.run(`CREATE TABLE IF NOT EXISTS readings (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            room TEXT NOT NULL,
-            temperature REAL NOT NULL,
-            humidity REAL NOT NULL,
-            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
-        )`);
+        const readings = [];
+        querySnapshot.forEach((doc) => {
+            readings.push({
+                id: doc.id,
+                ...doc.data()
+            });
+        });
+        
+        res.json({ data: readings });
+    } catch (error) {
+        console.error('Error getting readings:', error);
+        res.status(500).json({ error: error.message });
     }
 });
 
-// API endpoint to get all readings
-app.get('/api/readings', (req, res) => {
-    db.all('SELECT * FROM readings ORDER BY timestamp DESC', [], (err, rows) => {
-        if (err) {
-            res.status(500).json({ error: err.message });
-            return;
-        }
-        res.json({ data: rows });
-    });
-});
-
 // API endpoint to add a new reading
-app.post('/api/readings', (req, res) => {
+app.post('/api/readings', async (req, res) => {
     const { room, temperature, humidity, datetime } = req.body;
     
     if (!room || temperature === undefined || humidity === undefined) {
@@ -56,62 +49,67 @@ app.post('/api/readings', (req, res) => {
     // Use provided datetime or current timestamp
     const timestamp = datetime || new Date().toISOString();
     
-    const sql = 'INSERT INTO readings (room, temperature, humidity, timestamp) VALUES (?, ?, ?, ?)';
-    db.run(sql, [room, temperature, humidity, timestamp], function(err) {
-        if (err) {
-            res.status(500).json({ error: err.message });
-            return;
-        }
+    try {
+        const readingsRef = collection(db, 'readings');
+        const newReading = {
+            room,
+            temperature: parseFloat(temperature),
+            humidity: parseFloat(humidity),
+            timestamp
+        };
         
-        // Get the newly inserted reading
-        db.get('SELECT * FROM readings WHERE id = ?', [this.lastID], (err, row) => {
-            if (err) {
-                res.status(500).json({ error: err.message });
-                return;
-            }
-            res.json({ data: row, message: 'Reading added successfully' });
+        const docRef = await addDoc(readingsRef, newReading);
+        
+        res.json({ 
+            data: { 
+                id: docRef.id, 
+                ...newReading 
+            }, 
+            message: 'Reading added successfully' 
         });
-    });
+    } catch (error) {
+        console.error('Error adding reading:', error);
+        res.status(500).json({ error: error.message });
+    }
 });
 
 // API endpoint to export data as CSV
-app.get('/api/export', (req, res) => {
-    db.all('SELECT room, temperature, humidity, timestamp FROM readings ORDER BY timestamp DESC', [], (err, rows) => {
-        if (err) {
-            res.status(500).json({ error: err.message });
-            return;
-        }
+app.get('/api/export', async (req, res) => {
+    try {
+        const readingsRef = collection(db, 'readings');
+        const q = query(readingsRef, orderBy('timestamp', 'desc'));
+        const querySnapshot = await getDocs(q);
         
         // Convert data to CSV format
         let csv = 'Room,Temperature,Humidity,Date & Time\n';
-        rows.forEach(row => {
-            csv += `"${row.room}",${row.temperature},${row.humidity},"${row.timestamp}"\n`;
+        
+        querySnapshot.forEach((doc) => {
+            const reading = doc.data();
+            csv += `"${reading.room}",${reading.temperature},${reading.humidity},"${reading.timestamp}"\n`;
         });
         
         res.setHeader('Content-Type', 'text/csv');
         res.setHeader('Content-Disposition', 'attachment; filename=temperature_readings.csv');
         res.send(csv);
-    });
+    } catch (error) {
+        console.error('Error exporting readings:', error);
+        res.status(500).json({ error: error.message });
+    }
 });
 
 // API endpoint to delete a reading
-app.delete('/api/readings/:id', (req, res) => {
+app.delete('/api/readings/:id', async (req, res) => {
     const id = req.params.id;
     
-    const sql = 'DELETE FROM readings WHERE id = ?';
-    db.run(sql, [id], function(err) {
-        if (err) {
-            res.status(500).json({ error: err.message });
-            return;
-        }
-        
-        if (this.changes === 0) {
-            res.status(404).json({ error: 'Reading not found' });
-            return;
-        }
+    try {
+        const readingRef = doc(db, 'readings', id);
+        await deleteDoc(readingRef);
         
         res.json({ message: 'Reading deleted successfully' });
-    });
+    } catch (error) {
+        console.error('Error deleting reading:', error);
+        res.status(500).json({ error: error.message });
+    }
 });
 
 // Start the server
