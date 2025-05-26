@@ -1,29 +1,29 @@
-// Import Firebase libraries
-const { initializeApp } = require('firebase/app');
-const { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, query, orderBy } = require('firebase/firestore');
+// Import Firebase Admin SDK
+const admin = require('firebase-admin');
 
-// Your Firebase configuration (replace with your actual config)
-const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "your-project-id.firebaseapp.com",
-  projectId: "your-project-id",
-  storageBucket: "your-project-id.appspot.com",
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-  appId: "YOUR_APP_ID"
-};
+// Initialize Firebase Admin SDK with service account
+const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY);
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount)
+});
 
-// Export Firestore instance and collections
+const db = admin.firestore();
+
+// Export Firestore instance and helper functions
 module.exports = {
-  db,
-  collection,
-  addDoc,
-  getDocs,
-  deleteDoc,
-  doc,
-  query,
-  orderBy
+    db,
+    collection: (db, collectionName) => db.collection(collectionName),
+    addDoc: (collection, data) => collection.add(data),
+    getDocs: (query) => query.get(),
+    deleteDoc: (docRef) => docRef.delete(),
+    doc: (db, collectionName, id) => db.collection(collectionName).doc(id),
+    query: (collection, ...constraints) => {
+        let q = collection;
+        constraints.forEach(constraint => {
+            q = constraint(q);
+        });
+        return q;
+    },
+    orderBy: (field, direction) => (query) => query.orderBy(field, direction)
 };
