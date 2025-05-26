@@ -81,13 +81,20 @@ emailExportBtn.addEventListener('click', function() {
 
 // Function to load all readings
 function loadReadings() {
-    console.log('Loading readings...');
+    console.log('=== LOADING READINGS ===');
+    
     fetch('/api/readings')
-        .then(response => response.json())
+        .then(response => {
+            console.log('Load readings response status:', response.status);
+            console.log('Load readings response ok:', response.ok);
+            return response.json();
+        })
         .then(data => {
-            console.log('Readings data received:', data);
+            console.log('Load readings response data:', data);
             if (data.data && Array.isArray(data.data)) {
+                console.log('Number of readings received:', data.data.length);
                 displayReadings(data.data);
+                console.log('=== READINGS DISPLAYED ===');
             } else {
                 console.error('Unexpected data format:', data);
             }
@@ -99,7 +106,9 @@ function loadReadings() {
 
 // Function to add a new reading
 function addReading(reading) {
+    console.log('=== STARTING ADD READING ===');
     console.log('Submitting reading:', reading);
+    
     fetch('/api/readings', {
         method: 'POST',
         headers: {
@@ -107,25 +116,35 @@ function addReading(reading) {
         },
         body: JSON.stringify(reading)
     })
-    .then(response => response.json())
+    .then(response => {
+        console.log('Add reading response status:', response.status);
+        console.log('Add reading response ok:', response.ok);
+        return response.json();
+    })
     .then(data => {
-        console.log('Response data:', data);
+        console.log('Add reading response data:', data);
         if (data.error) {
+            console.error('Server returned error:', data.error);
             alert('Error: ' + data.error);
             return;
         }
         
+        console.log('=== CLEARING FORM ===');
         // Clear form fields
         form.reset();
         
+        console.log('=== SETTING DATETIME ===');
         // Set default date and time again
         setDatetimeToNow();
         
+        console.log('=== CALLING LOAD READINGS ===');
         // Refresh readings
         loadReadings();
+        console.log('=== ADD READING COMPLETE ===');
     })
     .catch(error => {
         console.error('Error adding reading:', error);
+        alert('Network error: ' + error.message);
     });
 }
 
@@ -163,27 +182,38 @@ function displayReadings(readings) {
 
 // Function to delete a reading
 function deleteReading(id) {
+    console.log('=== STARTING DELETE READING ===');
     console.log('Deleting reading with ID:', id);
+    
     if (!confirm('Are you sure you want to delete this reading?')) {
+        console.log('Delete cancelled by user');
         return;
     }
     
     fetch(`/api/readings/${id}`, {
         method: 'DELETE'
     })
-    .then(response => response.json())
+    .then(response => {
+        console.log('Delete response status:', response.status);
+        console.log('Delete response ok:', response.ok);
+        return response.json();
+    })
     .then(data => {
         console.log('Delete response data:', data);
         if (data.error) {
+            console.error('Server returned error:', data.error);
             alert('Error: ' + data.error);
             return;
         }
         
+        console.log('=== CALLING LOAD READINGS AFTER DELETE ===');
         // Refresh readings
         loadReadings();
+        console.log('=== DELETE READING COMPLETE ===');
     })
     .catch(error => {
         console.error('Error deleting reading:', error);
+        alert('Network error: ' + error.message);
     });
 }
 
