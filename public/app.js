@@ -83,13 +83,14 @@ emailExportBtn.addEventListener('click', function() {
 function loadReadings() {
     console.log('Loading readings...');
     fetch('/api/readings')
-        .then(response => {
-            console.log('Readings response status:', response.status);
-            return response.json();
-        })
+        .then(response => response.json())
         .then(data => {
             console.log('Readings data received:', data);
-            displayReadings(data.data);
+            if (data.data && Array.isArray(data.data)) {
+                displayReadings(data.data);
+            } else {
+                console.error('Unexpected data format:', data);
+            }
         })
         .catch(error => {
             console.error('Error loading readings:', error);
@@ -106,10 +107,7 @@ function addReading(reading) {
         },
         body: JSON.stringify(reading)
     })
-    .then(response => {
-        console.log('Response status:', response.status);
-        return response.json();
-    })
+    .then(response => response.json())
     .then(data => {
         console.log('Response data:', data);
         if (data.error) {
@@ -125,7 +123,6 @@ function addReading(reading) {
         
         // Refresh readings
         loadReadings();
-        console.log('Refreshing readings after add');
     })
     .catch(error => {
         console.error('Error adding reading:', error);
@@ -141,24 +138,24 @@ function displayReadings(readings) {
         row.dataset.id = reading.id;
         
         // Format date with shorter format for mobile
-const date = new Date(reading.timestamp);
-const month = String(date.getMonth() + 1).padStart(2, '0');
-const day = String(date.getDate()).padStart(2, '0');
-const year = String(date.getFullYear()).slice(2); // Just the last 2 digits
-const hours = String(date.getHours()).padStart(2, '0');
-const minutes = String(date.getMinutes()).padStart(2, '0');
-const formattedDate = `${month}/${day}/${year} ${hours}:${minutes}`;
+        const date = new Date(reading.timestamp);
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const year = String(date.getFullYear()).slice(2); // Just the last 2 digits
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        const formattedDate = `${month}/${day}/${year} ${hours}:${minutes}`;
         
         // Truncate room name to first 4 characters
-const shortRoomName = reading.room.substring(0, 4);
-
-row.innerHTML = `
-    <td>${formattedDate}</td>
-    <td>${shortRoomName}</td>
-    <td>${reading.temperature} °F</td>
-    <td>${reading.humidity} %</td>
-    <td><button class="btn-delete" onclick="deleteReading(${reading.id})">Del</button></td>
-`;
+        const shortRoomName = reading.room.substring(0, 4);
+        
+        row.innerHTML = `
+            <td>${formattedDate}</td>
+            <td>${shortRoomName}</td>
+            <td>${reading.temperature} °F</td>
+            <td>${reading.humidity} %</td>
+            <td><button class="btn-delete" onclick="deleteReading('${reading.id}')">Del</button></td>
+        `;
         
         readingsTable.appendChild(row);
     });
@@ -174,10 +171,7 @@ function deleteReading(id) {
     fetch(`/api/readings/${id}`, {
         method: 'DELETE'
     })
-    .then(response => {
-        console.log('Delete response status:', response.status);
-        return response.json();
-    })
+    .then(response => response.json())
     .then(data => {
         console.log('Delete response data:', data);
         if (data.error) {
@@ -187,7 +181,6 @@ function deleteReading(id) {
         
         // Refresh readings
         loadReadings();
-        console.log('Refreshing readings after delete');
     })
     .catch(error => {
         console.error('Error deleting reading:', error);

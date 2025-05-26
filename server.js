@@ -102,9 +102,7 @@ app.delete('/api/readings/:id', async (req, res) => {
     const id = req.params.id;
     
     try {
-        const readingRef = doc(db, 'readings', id);
-        await deleteDoc(readingRef);
-        
+        await deleteDoc(doc(db, 'readings', id));
         res.json({ message: 'Reading deleted successfully' });
     } catch (error) {
         console.error('Error deleting reading:', error);
